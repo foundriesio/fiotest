@@ -1,0 +1,141 @@
+#!/usr/bin/python3
+import json
+import os
+from tempfile import mkdtemp
+from typing import List
+from shutil import rmtree
+import subprocess
+import sys
+
+import requests
+
+here = os.path.dirname(os.path.abspath(__file__))
+
+
+def status(msg: str, prefix: str = "== "):
+    """Print a commonly formatted status message to stdout.
+       It also ensures the buffer is flushed and written immediately"""
+    sys.stdout.buffer.write(prefix.encode())
+    sys.stdout.buffer.write(b" ")
+    sys.stdout.buffer.write(msg.encode())
+    sys.stdout.buffer.write(b"\n")
+    sys.stdout.buffer.flush()
+
+
+def target_name(sota_dir: str) -> str:
+    with open(os.path.join(sota_dir, "current-target")) as f:
+        for line in f:
+            if line.startswith("TARGET_NAME"):
+                k, v = line.split("=")
+                return v.replace('"', "").strip()  # remove spaces and quotes
+    sys.exit("Unable to find current target")
+
+
+def test_url(sota_dir: str) -> str:
+    with open(os.path.join(sota_dir, "sota.toml")) as f:
+        for line in f:
+            if line.startswith("server ="):
+                k, v = line.split("=")
+                v = v.replace('"', "").strip()  # remove spaces and quotes
+                return v + "/tests"
+    sys.exit("Unable to find server url")
+
+
+def run(test_dir: str, test_cmd: List[str]) -> str:
+    i = 0
+    max_lines = 20
+    last_lines: List[bytes] = [b""] * max_lines
+    env = os.environ.copy()
+    env["PATH"] = here + ":" + os.environ["PATH"]
+    env["TEST_DIR"] = test_dir
+    try:
+        p = subprocess.Popen(
+            test_cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env
+        )
+        assert p.stdout  # for mypy
+        for line in p.stdout:
+            sys.stdout.buffer.write(b"| ")
+            sys.stdout.buffer.write(line)
+            sys.stdout.buffer.flush()
+            last_lines[i % max_lines] = line
+            i += 1
+        p.wait()
+        if p.returncode != 0:
+            raise subprocess.CalledProcessError(p.returncode, test_cmd)
+    except Exception as e:
+        buf = b"".join(x for x in last_lines[i % max_lines :] if x)
+        buf += b"".join(x for x in last_lines[: i % max_lines])
+        return "%r\nLast %d lines of test:\n%s" % (e, max_lines, buf.decode())
+    return ""
+
+
+def collect_results(results_dir: str) -> List[dict]:
+    results: List[dict] = []
+
+    tests = os.listdir(results_dir)
+    tests.sort(key=lambda x: float(x.split("-")[0]))  # sort by test time
+    for res in tests:
+        ts, name = res.split("-", 1)
+        result = {
+            "name": name,
+            "status": "PASSED",
+            "local_ts": float(ts),
+        }
+        results.append(result)
+        failed = os.path.exists(os.path.join(results_dir, res, "failed"))
+        if failed:
+            result["status"] = "FAILED"
+            try:
+                with open(os.path.join(results_dir, res, "log")) as f:
+                    result["details"] = f.read()
+            except FileNotFoundError:
+                pass
+    return results
+
+
+def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
+    cur_target = target_name(sota_dir)
+    url = test_url(sota_dir)
+    status("Test URL: " + url)
+
+    ca = os.path.join(sota_dir, "root.crt")
+    cert = (
+        os.path.join(sota_dir, "client.pem"),
+        os.path.join(sota_dir, "pkey.pem"),
+    )
+
+    data = {"name": test}
+    headers = {"x-ats-target": cur_target}
+
+    if not dryrun:
+        r = requests.post(url, json=data, headers=headers, verify=ca, cert=cert)
+        if r.status_code != 201:
+            sys.exit("Unable to start test: HTTP_%d: %s" % (r.status_code, r.text))
+        test_id = r.text.strip()
+    else:
+        test_id = "DRYRUN"
+    status("Starting test: " + test_id + " -> " + " ".join(test_cmd))
+
+    results_dir = mkdtemp(prefix="fio-test")
+    data = {}
+    failure = run(results_dir, test_cmd)
+    if failure:
+        data = {"status": "FAILED", "details": failure}
+
+    data["results"] = collect_results(results_dir)
+    rmtree(results_dir)
+
+    if dryrun:
+        print(json.dumps(data, indent=2))
+    else:
+        r = requests.put(url + "/" + test_id, json=data, verify=ca, cert=cert)
+        if r.status_code != 200:
+            sys.exit("Unable to complete test: HTTP_%d: %s" % (r.status_code, r.text))
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        sys.exit("Usage: %s <test-name> <test command>..." % sys.argv[0])
+    sota_dir = os.environ.get("SOTA_DIR", "/var/sota")
+    dryrun = os.environ.get("DRYRUN")
+    main(sota_dir, sys.argv[1], sys.argv[2:], dryrun)

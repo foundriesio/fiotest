@@ -1,0 +1,11 @@
+#!/usr/bin/sh -e
+
+set -o pipefail
+
+result_dir="${TEST_DIR}/$(date +%s.%N)-$1"
+shift
+
+mkdir ${result_dir}
+
+echo  = Test Result $*
+$* 2>&1 | tee ${result_dir}/log || touch ${result_dir}/failed
