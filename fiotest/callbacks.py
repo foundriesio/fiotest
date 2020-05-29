@@ -33,7 +33,7 @@ class AktualizrCallbacks(SimpleHTTPRequestHandler):
             if msg == "install-post":
                 assert status is not None  # for mypy
                 self.callback.on_install_post(current, status)
-            if msg == "install-pre":
+            elif msg == "install-pre":
                 self.callback.on_install_pre(current)
             else:
                 self.log_message("Ignoring callback msg: %s", msg)
