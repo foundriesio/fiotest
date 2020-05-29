@@ -8,11 +8,16 @@ from fiotest.callbacks import (
     AktualizrCallbackHandler,
     CallbackServer,
 )
+from fiotest.host import execute as host_execute
 from fiotest.runner import SpecRunner
 from fiotest.spec import TestSpec
 
 logging.basicConfig(level="INFO", format="%(asctime)s %(levelname)s: %(message)s")
 log = logging.getLogger()
+
+CBFILE = os.environ.get(
+    "CALLBACK_SCRIPT", "/var/sota/compose/fiotest/aklite-callback.sh"
+)
 
 
 class Coordinator(AktualizrCallbackHandler):
@@ -36,7 +41,18 @@ class Coordinator(AktualizrCallbackHandler):
             self.runner.start()
 
 
+def ensure_callbacks_configured():
+    cbtoml = "/etc/sota/conf.d/z-90-fiotest.toml"
+    if not os.path.exists(cbtoml):
+        log.info("Configuring aktualizr-lite callback...")
+        with open(cbtoml, "w") as f:
+            f.write("[pacman]\n")
+            f.write('callback_program = "%s"\n' % CBFILE)
+        host_execute("sudo systemctl restart aktualizr-lite")
+
+
 def main(spec: TestSpec):
+    ensure_callbacks_configured()
     cb_server = CallbackServer(Coordinator(spec))
     cb_server.run_forever()
 

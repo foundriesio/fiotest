@@ -8,5 +8,6 @@ services:
     ports:
       - 8000:${PORT-8000}
     volumes:
+      - ${SOTA_CONFD-/etc/sota/conf.d}:/etc/sota/conf.d
       - ${SOTA_DIR-/var/sota}:/var/sota
       - ${TEST_SPEC-./test-spec.yml}:/test-spec.yml
