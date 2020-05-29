@@ -4,7 +4,7 @@ ARG BUILD_PKGS="build-essential wget"
 
 RUN \
 	apt update -y  && \
-	apt install -y $BUILD_PKGS python3 python3-requests && \
+	apt install -y $BUILD_PKGS python3 python3-pydantic python3-requests python3-yaml && \
 	wget -O /ltp.tar.xz https://github.com/linux-test-project/ltp/releases/download/20200515/ltp-full-20200515.tar.xz && \
 		tar -xf /ltp.tar.xz && \
 		cd ltp-full* && \
@@ -13,7 +13,7 @@ RUN \
 		make install && \
 		cd ../ && \
 	rm -rf /ltp.tar.xz ./ltp-full* && \
-	apt remove -y $BUILD_PKGS && \
+	apt autoremove -y $BUILD_PKGS && \
 	rm -rf /var/lib/apt/lists/* && \
 	apt clean
 

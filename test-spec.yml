@@ -1,0 +1,17 @@
+sequence:
+  - tests:
+      - name: ltp
+        command:
+          - /usr/share/fio-tests/ltp.sh
+    # repeat not specified, so runs one time
+  - reboot:
+      command:
+        - /bin/true
+  - tests:
+      - name: sleep
+        command:
+          - /bin/sleep
+          - 10
+    repeat:
+      total: 4          # run 4 times. If not specified, repeat forever
+      delay_seconds: 3  # sleep 3 seconds between loops, default 3600 (1 hour)
