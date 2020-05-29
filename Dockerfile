@@ -19,3 +19,4 @@ RUN \
 
 COPY ./bin/* /usr/local/bin/
 COPY ./tests /usr/share/fio-tests
+COPY ./fiotest /usr/lib/python3/dist-packages/fiotest
