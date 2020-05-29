@@ -4,6 +4,7 @@ services:
   fiotest:
     image: hub.foundries.io/fiotest
     restart: always
+    privileged: true
     command: python3 -m fiotest.main /test-spec.yml
     ports:
       - 8000:${PORT-8000}
