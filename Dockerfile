@@ -1,10 +1,11 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
-ARG BUILD_PKGS="build-essential wget"
+ARG BUILD_PKGS="build-essential python3-pip wget"
 
 RUN \
 	apt update -y  && \
-	apt install -y $BUILD_PKGS python3 python3-asyncssh python3-pydantic python3-requests python3-yaml && \
+	apt install -y $BUILD_PKGS python3 python3-asyncssh python3-requests python3-yaml && \
+	pip3 install pydantic==1.5.1 && \
 	wget -O /ltp.tar.xz https://github.com/linux-test-project/ltp/releases/download/20200515/ltp-full-20200515.tar.xz && \
 		tar -xf /ltp.tar.xz && \
 		cd ltp-full* && \
