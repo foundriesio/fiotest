@@ -14,7 +14,11 @@ def execute(cmd: str) -> str:
             return await conn.run(cmd)
 
     try:
-        result = asyncio.get_event_loop().run_until_complete(ssh())
+        loop = asyncio.get_event_loop()
+        if loop is None:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(ssh())
         return result.stdout
     except (OSError, asyncssh.Error) as exc:
         print("SSH connection failed: " + str(exc))
