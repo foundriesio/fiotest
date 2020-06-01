@@ -23,9 +23,12 @@ run_ltp() {
 		parts=($line)
 		result_dir="${TEST_DIR}/$(date +%s.%N)-${parts[0]}"
 		mkdir ${result_dir}
-		if [ "${parts[1]}" != PASS ] ; then
+		if [ "${parts[1]}" = "FAIL" ] ; then
 			touch ${result_dir}/failed
 			failed=1
+		fi
+		if [ "${parts[1]}" = "CONF" ] ; then
+			touch ${result_dir}/skipped
 		fi
 	done < <(read_ltp_results "${LOGS}.log")
 }
