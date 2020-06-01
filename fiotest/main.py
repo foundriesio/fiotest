@@ -52,6 +52,7 @@ def ensure_callbacks_configured():
 
 
 def main(spec: TestSpec):
+    log.info("Test Spec is: %r", spec)
     ensure_callbacks_configured()
     cb_server = CallbackServer(Coordinator(spec))
     cb_server.run_forever()
