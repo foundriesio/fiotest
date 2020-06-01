@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from threading import Timer
 
 import yaml
 
@@ -22,11 +23,29 @@ CBFILE = os.environ.get(
 
 class Coordinator(AktualizrCallbackHandler):
     def __init__(self, spec: TestSpec):
+        self.timer = Timer(600, self._assert_callbacks)
+        self.timer.start()
+        self.callbacks_enabled = False
         self.runner = None
         self.spec = spec
         if os.path.exists(SpecRunner.reboot_state):
             self.runner = SpecRunner(self.spec)
             self.runner.start()
+
+    def on_check_for_updates_pre(self, current_target: str):
+        if not self.callbacks_enabled:
+            log.info("fiotest receiving callbacks from aktualizr-lite")
+            self.callbacks_enabled = True
+            self.timer.cancel()
+
+    def _assert_callbacks(self):
+        if self.callbacks_enabled:
+            return
+
+        log.info(
+            "aklite doesn't appear to be configured for fiotest callbacks. Restarting now!"
+        )
+        host_execute("sudo systemctl restart aktualizr-lite")
 
     def on_install_pre(self, current_target: str):
         if self.runner:
@@ -54,7 +73,7 @@ def ensure_callbacks_configured():
         with open(cbtoml, "w") as f:
             f.write("[pacman]\n")
             f.write('callback_program = "%s"\n' % CBFILE)
-        host_execute("sudo systemctl restart aktualizr-lite")
+        log.warning("TODO - aklite must be restarted before fiotest will be active")
 
 
 def main(spec: TestSpec):

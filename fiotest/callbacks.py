@@ -9,6 +9,9 @@ class AktualizrCallbackHandler:
     def on_install_post(self, current_target: str, status: str):
         raise NotImplementedError()
 
+    def on_check_for_updates_pre(self, current_target: str):
+        raise NotImplementedError()
+
 
 class AktualizrCallbacks(SimpleHTTPRequestHandler):
     callback: AktualizrCallbackHandler = AktualizrCallbackHandler()
@@ -35,6 +38,8 @@ class AktualizrCallbacks(SimpleHTTPRequestHandler):
                 self.callback.on_install_post(current, status)
             elif msg == "install-pre":
                 self.callback.on_install_pre(current)
+            elif msg == "check-for-update-pre":
+                self.callback.on_check_for_updates_pre(current)
             else:
                 self.log_message("Ignoring callback msg: %s", msg)
 
