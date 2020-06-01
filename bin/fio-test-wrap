@@ -2,6 +2,7 @@
 import json
 import os
 from tempfile import mkdtemp
+from time import sleep
 from typing import List
 from shutil import rmtree
 import subprocess
@@ -10,6 +11,26 @@ import sys
 import requests
 
 here = os.path.dirname(os.path.abspath(__file__))
+
+
+def requests_op(op, *args, **kwargs):
+    """A retriable requests helper."""
+    for i in (1, 2, 4, 8, 16):
+        r = requests.post(*args, **kwargs)
+        if r.status_code == 201:
+            break
+        else:
+            status("ERROR with %s - HTTP_%d: %s" % (r.url, r.status_code, r.text))
+            sleep(i)
+    return r
+
+
+def post(*args, **kwargs):
+    return requests_op(requests.post, *args, **kwargs)
+
+
+def put(*args, **kwargs):
+    return requests_op(requests.post, *args, **kwargs)
 
 
 def status(msg: str, prefix: str = "== "):
@@ -111,7 +132,7 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
     headers = {"x-ats-target": cur_target}
 
     if not dryrun:
-        r = requests.post(url, json=data, headers=headers, verify=ca, cert=cert)
+        r = post(url, json=data, headers=headers, verify=ca, cert=cert)
         if r.status_code != 201:
             sys.exit("Unable to start test: HTTP_%d: %s" % (r.status_code, r.text))
         test_id = r.text.strip()
@@ -131,7 +152,7 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
     if dryrun:
         print(json.dumps(data, indent=2))
     else:
-        r = requests.put(url + "/" + test_id, json=data, verify=ca, cert=cert)
+        r = put(url + "/" + test_id, json=data, verify=ca, cert=cert)
         if r.status_code != 200:
             sys.exit("Unable to complete test: HTTP_%d: %s" % (r.status_code, r.text))
 
