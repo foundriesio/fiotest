@@ -53,6 +53,7 @@ class SpecRunner:
                     self._run_tests(seq)
         except SpecStopped:
             log.warning("Sequence has been stopped before completion")
+        log.info("Testing complete")
 
     def stop(self):
         log.info("Stopping run")
