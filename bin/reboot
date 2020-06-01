@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+# https://disconnect3d.pl/2018/11/12/reboot-your-pc-from-a-docker-container/
+# https://en.wikipedia.org/wiki/Magic_SysRq_key
+
+echo 1 > /proc/sys/kernel/sysrq
+echo b > /proc/sysrq-trigger
