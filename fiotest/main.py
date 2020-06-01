@@ -9,7 +9,7 @@ from fiotest.callbacks import (
     AktualizrCallbackHandler,
     CallbackServer,
 )
-from fiotest.host import execute as host_execute
+from fiotest.host import sudo_execute as host_sudo
 from fiotest.runner import SpecRunner
 from fiotest.spec import TestSpec
 
@@ -45,7 +45,9 @@ class Coordinator(AktualizrCallbackHandler):
         log.info(
             "aklite doesn't appear to be configured for fiotest callbacks. Restarting now!"
         )
-        host_execute("sudo systemctl restart aktualizr-lite")
+        rc = host_sudo("systemctl restart aktualizr-lite")
+        if rc != 0:
+            log.error("Unable to restart aktualizr-lite")
 
     def on_install_pre(self, current_target: str):
         if self.runner:
