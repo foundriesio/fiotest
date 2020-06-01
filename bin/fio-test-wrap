@@ -16,7 +16,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 def requests_op(op, *args, **kwargs):
     """A retriable requests helper."""
     for i in (1, 2, 4, 8, 16):
-        r = requests.post(*args, **kwargs)
+        r = op(*args, **kwargs)
         if r.status_code == 201:
             break
         else:
@@ -30,7 +30,7 @@ def post(*args, **kwargs):
 
 
 def put(*args, **kwargs):
-    return requests_op(requests.post, *args, **kwargs)
+    return requests_op(requests.put, *args, **kwargs)
 
 
 def status(msg: str, prefix: str = "== "):
