@@ -90,6 +90,9 @@ def collect_results(results_dir: str) -> List[dict]:
                     result["details"] = f.read()
             except FileNotFoundError:
                 pass
+        skipped = os.path.exists(os.path.join(results_dir, res, "skipped"))
+        if skipped:
+            result["status"] = "SKIPPED"
     return results
 
 
