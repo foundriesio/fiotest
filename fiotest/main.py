@@ -42,6 +42,12 @@ class Coordinator(AktualizrCallbackHandler):
 
 
 def ensure_callbacks_configured():
+    cbscript = "/var/sota/aklite-callback.sh"
+    with open(os.path.basename(cbscript)) as fin:
+        with open(cbscript, "w") as f:
+            f.write(fin.read())
+            os.fchmod(f.fileno(), 0o755)
+
     cbtoml = "/etc/sota/conf.d/z-90-fiotest.toml"
     if not os.path.exists(cbtoml):
         log.info("Configuring aktualizr-lite callback...")
