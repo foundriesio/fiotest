@@ -43,7 +43,7 @@ class SpecRunner:
         try:
             for i, seq in enumerate(self.spec.sequence):
                 self._assert_running()
-                if i <= completed:
+                if i < completed:
                     log.debug("Skipping seq %d", i)
                     continue
                 log.info("Executing seq %d", i)
@@ -69,7 +69,7 @@ class SpecRunner:
     def _reboot(self, seq_idx: int, reboot: Reboot):
         log.warning("rebooting!!!!")
         with open(self.reboot_state, "w") as f:
-            state = {"seq_idx": seq_idx}
+            state = {"seq_idx": seq_idx + 1}
             json.dump(state, f)
         execv(reboot.command[0], reboot.command)
 
