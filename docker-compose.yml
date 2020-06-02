@@ -12,3 +12,4 @@ services:
       - ${SOTA_CONFD-/etc/sota/conf.d}:/etc/sota/conf.d
       - ${SOTA_DIR-/var/sota}:/var/sota
       - ${TEST_SPEC-./test-spec.yml}:/test-spec.yml
+      - ${FIOTEST_DIR-/var/lib/fiotest}:/var/lib/fiotest

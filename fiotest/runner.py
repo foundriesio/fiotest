@@ -15,7 +15,7 @@ class SpecStopped(Exception):
 
 
 class SpecRunner:
-    reboot_state = "/var/lib/fio-test.state"
+    reboot_state = "/var/lib/fiotest/reboot.state"
 
     def __init__(self, spec: TestSpec):
         self.spec = spec
