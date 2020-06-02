@@ -53,9 +53,11 @@ class SpecRunner:
                     # run_tests recursively decrements seq.repeat.total
                     # we need to keep a copy of this value so that testing
                     # can be repeated
-                    total = seq.repeat.total
+                    if seq.repeat:
+                        total = seq.repeat.total
                     self._run_tests(seq)
-                    seq.repeat.total = total
+                    if seq.repeat:
+                        seq.repeat.total = total
         except SpecStopped:
             log.warning("Sequence has been stopped before completion")
         log.info("Testing complete")
