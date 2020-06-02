@@ -1,65 +1,14 @@
 #!/usr/bin/python3
-import json
 import os
 from tempfile import mkdtemp
-from time import sleep
 from typing import List
 from shutil import rmtree
 import subprocess
 import sys
 
-import requests
+from fiotest.api import API, status
 
 here = os.path.dirname(os.path.abspath(__file__))
-
-
-def requests_op(op, *args, **kwargs):
-    """A retriable requests helper."""
-    for i in (1, 2, 4, 8, 16):
-        r = op(*args, **kwargs)
-        if r.status_code in (200, 201):
-            break
-        else:
-            status("ERROR with %s - HTTP_%d: %s" % (r.url, r.status_code, r.text))
-            sleep(i)
-    return r
-
-
-def post(*args, **kwargs):
-    return requests_op(requests.post, *args, **kwargs)
-
-
-def put(*args, **kwargs):
-    return requests_op(requests.put, *args, **kwargs)
-
-
-def status(msg: str, prefix: str = "== "):
-    """Print a commonly formatted status message to stdout.
-       It also ensures the buffer is flushed and written immediately"""
-    sys.stdout.buffer.write(prefix.encode())
-    sys.stdout.buffer.write(b" ")
-    sys.stdout.buffer.write(msg.encode())
-    sys.stdout.buffer.write(b"\n")
-    sys.stdout.buffer.flush()
-
-
-def target_name(sota_dir: str) -> str:
-    with open(os.path.join(sota_dir, "current-target")) as f:
-        for line in f:
-            if line.startswith("TARGET_NAME"):
-                k, v = line.split("=")
-                return v.replace('"', "").strip()  # remove spaces and quotes
-    sys.exit("Unable to find current target")
-
-
-def test_url(sota_dir: str) -> str:
-    with open(os.path.join(sota_dir, "sota.toml")) as f:
-        for line in f:
-            if line.startswith("server ="):
-                k, v = line.split("=")
-                v = v.replace('"', "").strip()  # remove spaces and quotes
-                return v + "/tests"
-    sys.exit("Unable to find server url")
 
 
 def run(test_dir: str, test_cmd: List[str]) -> str:
@@ -118,26 +67,8 @@ def collect_results(results_dir: str) -> List[dict]:
 
 
 def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
-    cur_target = target_name(sota_dir)
-    url = test_url(sota_dir)
-    status("Test URL: " + url)
-
-    ca = os.path.join(sota_dir, "root.crt")
-    cert = (
-        os.path.join(sota_dir, "client.pem"),
-        os.path.join(sota_dir, "pkey.pem"),
-    )
-
-    data = {"name": test}
-    headers = {"x-ats-target": cur_target}
-
-    if not dryrun:
-        r = post(url, json=data, headers=headers, verify=ca, cert=cert)
-        if r.status_code != 201:
-            sys.exit("Unable to start test: HTTP_%d: %s" % (r.status_code, r.text))
-        test_id = r.text.strip()
-    else:
-        test_id = "DRYRUN"
+    api = API(sota_dir, dryrun)
+    test_id = api.start_test(test)
     status("Starting test: " + test_id + " -> " + " ".join(test_cmd))
 
     fiotest_dir = "/var/lib/fiotest"
@@ -156,13 +87,7 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
 
     data["results"] = collect_results(results_dir)
     rmtree(results_dir)
-
-    if dryrun:
-        print(json.dumps(data, indent=2))
-    else:
-        r = put(url + "/" + test_id, json=data, verify=ca, cert=cert)
-        if r.status_code != 200:
-            sys.exit("Unable to complete test: HTTP_%d: %s" % (r.status_code, r.text))
+    api.complete_test(test_id, data)
 
 
 if __name__ == "__main__":
