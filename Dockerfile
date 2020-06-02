@@ -1,6 +1,6 @@
 FROM alpine:3.12
 
-ARG BUILD_PKGS="acl-dev autoconf automake gcc keyutils-dev libaio-dev libacl libcap-dev libffi-dev libselinux-dev libsepol-dev libtirpc-dev linux-headers make musl-dev openssl-dev python3-dev"
+ARG BUILD_PKGS="acl-dev autoconf automake binutils gcc keyutils-dev libaio-dev libacl libcap-dev libffi-dev libselinux-dev libsepol-dev libtirpc-dev linux-headers make musl-dev openssl-dev python3-dev"
 
 RUN \
 	apk add --no-cache $BUILD_PKGS bash python3 py3-pip && \
@@ -23,6 +23,8 @@ RUN \
 		make install && \
 		cd ../ && \
 	rm -rf /ltp.tar.xz ./ltp-full* && \
+	cd /opt/ltp/testcases/bin && \
+	(strip `ls | grep -v .sh | grep -v .py` || true) && \
 	apk del $BUILD_PKGS
 
 COPY ./bin/* /usr/local/bin/
