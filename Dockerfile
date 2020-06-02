@@ -27,5 +27,5 @@ RUN \
 
 COPY ./bin/* /usr/local/bin/
 COPY ./tests /usr/share/fio-tests
-COPY ./fiotest /usr/lib/python3/dist-packages/fiotest
+COPY ./fiotest /usr/lib/python3.8/site-packages/fiotest
 COPY ./aklite-callback.sh /
