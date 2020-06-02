@@ -8,4 +8,4 @@ data="${MESSAGE},${CURRENT_TARGET}"
 if [ -n "$RESULT" ] ; then
 	data="${data},${RESULT}"
 fi
-wget -O- --post-data="${data}" http://localhost:8000/
+wget -O- -q --post-data="${data}" http://localhost:8000/
