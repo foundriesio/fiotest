@@ -17,7 +17,7 @@ def requests_op(op, *args, **kwargs):
     """A retriable requests helper."""
     for i in (1, 2, 4, 8, 16):
         r = op(*args, **kwargs)
-        if r.status_code == 201:
+        if r.status_code in (200, 201):
             break
         else:
             status("ERROR with %s - HTTP_%d: %s" % (r.url, r.status_code, r.text))
