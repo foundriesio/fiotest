@@ -65,7 +65,7 @@ class API:
             return r.text.strip()
         return "DRYRUN"
 
-    def complete_test(self, test_id: str, data: dict) -> str:
+    def complete_test(self, test_id: str, data: dict):
         if self.dryrun:
             print(json.dumps(data, indent=2))
         else:

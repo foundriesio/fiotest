@@ -41,6 +41,7 @@ def execute(cmd: str, stdin: Optional[str] = None) -> int:
         return loop.run_until_complete(ssh())
     except (OSError, asyncssh.Error) as exc:
         print("SSH connection failed: " + str(exc))
+        return 1
 
 
 def sudo_execute(cmd: str) -> int:
