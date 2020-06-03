@@ -5,6 +5,7 @@ import subprocess
 from threading import Thread
 from time import sleep
 
+from fiotest.api import API
 from fiotest.spec import Reboot, Sequence, Test, TestSpec
 
 log = logging.getLogger()
@@ -37,6 +38,7 @@ class SpecRunner:
                     completed,
                 )
             unlink(self.reboot_state)
+            API("/var/sota", False).complete_test(data["test_id"], {})
         except FileNotFoundError:
             pass  # This is the "normal" case - no reboot has occurred
 
@@ -75,8 +77,9 @@ class SpecRunner:
 
     def _reboot(self, seq_idx: int, reboot: Reboot):
         log.warning("rebooting!!!!")
+        test_id = API("/var/sota", False).start_test("reboot")
         with open(self.reboot_state, "w") as f:
-            state = {"seq_idx": seq_idx + 1}
+            state = {"seq_idx": seq_idx + 1, "test_id": test_id}
             json.dump(state, f)
         execv(reboot.command[0], reboot.command)
 
