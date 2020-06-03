@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class Test(BaseModel):
     name: str
     command: List[str]
+    on_host: bool = False
 
 
 class Reboot(BaseModel):

@@ -84,7 +84,19 @@ class SpecRunner:
         execv(reboot.command[0], reboot.command)
 
     def _run_test(self, test: Test):
-        args = ["/usr/local/bin/fio-test-wrap", test.name] + test.command
+        args = ["/usr/local/bin/fio-test-wrap", test.name]
+        if test.on_host:
+            args.extend(
+                [
+                    "sshpass",
+                    "-pfio",
+                    "ssh",
+                    "-o",
+                    "StrictHostKeyChecking no",
+                    "fio@172.20.0.1",
+                ]
+            )
+        args.extend(test.command)
         with open("/tmp/tmp.log", "wb") as f:
             p = subprocess.Popen(args, stderr=f, stdout=f)
             while p.poll() is None:
