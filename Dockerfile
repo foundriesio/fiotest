@@ -5,7 +5,7 @@ ARG BUILD_PKGS="acl-dev autoconf automake binutils gcc keyutils-dev libaio-dev l
 RUN \
 	apk add --no-cache $BUILD_PKGS bash openssh-client python3 py3-pip sshpass && \
 	rm /sbin/reboot && ln -s /usr/local/bin/reboot /sbin/reboot && \
-	pip3 install asyncssh==2.2.1 requests==2.23.0 pyyaml==5.3.1 pydantic==1.5.1 && \
+	pip3 install asyncssh==2.2.1 netifaces==0.10.9 requests==2.23.0 pyyaml==5.3.1 pydantic==1.5.1 && \
 	wget -O /ltp.tar.xz https://github.com/linux-test-project/ltp/releases/download/20200515/ltp-full-20200515.tar.xz && \
 		tar -xf /ltp.tar.xz && \
 		cd ltp-full* && \

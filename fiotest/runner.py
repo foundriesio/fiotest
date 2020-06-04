@@ -5,6 +5,8 @@ import subprocess
 from threading import Thread
 from time import sleep
 
+import netifaces
+
 from fiotest.api import API
 from fiotest.spec import Reboot, Sequence, Test, TestSpec
 
@@ -84,6 +86,7 @@ class SpecRunner:
         execv(reboot.command[0], reboot.command)
 
     def _run_test(self, test: Test):
+        host_ip = netifaces.gateways()['default'][netifaces.AF_INET][0]
         args = ["/usr/local/bin/fio-test-wrap", test.name]
         if test.on_host:
             args.extend(
@@ -93,7 +96,7 @@ class SpecRunner:
                     "ssh",
                     "-o",
                     "StrictHostKeyChecking no",
-                    "fio@172.20.0.1",
+                    "fio@" + host_ip,
                 ]
             )
         args.extend(test.command)
