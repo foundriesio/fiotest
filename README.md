@@ -78,8 +78,20 @@ sequence:
           - /usr/share/fio-tests/ltp.sh
 ~~~
 
+A test can be run directly on the host with:
+~~~
+sequence:
+  - tests:
+      - name: dmesg
+        on_host: true
+        command:
+          - /bin/dmesg
+~~~
+
 ## How to extend
 
-1. Create a container based on hub.foundries.io/fiotest with custom tests.
+1. Decide on approach to testing. The fiotest container can do a lot including
+   running tests on the host OS. However, creating a container based on
+   hub.foundries.io/lmp/fiotest might be needed for customized tests.
 2. Create a custom test-spec.yml.
 3. Update docker-compose.yml to reference 1 and 2.
