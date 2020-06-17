@@ -2,45 +2,6 @@
 
 set -o pipefail
 
-# require ipv6:
-# bind04
-# bind05
-
-# really slow
-# bind06
-# fork13
-# needs full blown "ps":
-# msgstress04
-
-# /dev/block/loop stuf
-# chown04
-fsmount01
-fsmount02
-fsopen01
-fsopen02
-fspick01
-fspick02
-fanotify13
-fanotify14
-fanotify15
-fanotify16
-lchown03
-lchown03_16
-linkat02
-mknod07
-mmap16
-mount02
-mount03
-mount04
-mount06
-move_mount01
-move_mount02
-
-# crashes:
-# creat05
-# dup3
-# fcntl12
-
 TESTS="${TESTS-syscalls -s madvise}"
 LTP_PATH="${LTP_PATH-/opt/ltp}"
 LOGS="/tmp/LTP_$(date +%s)_"
