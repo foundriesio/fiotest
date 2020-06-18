@@ -17,7 +17,7 @@ logging.basicConfig(level="INFO", format="%(asctime)s %(levelname)s: %(message)s
 log = logging.getLogger()
 
 CBFILE = os.environ.get(
-    "CALLBACK_SCRIPT", "/var/sota/compose/fiotest/aklite-callback.sh"
+    "CALLBACK_SCRIPT", "/var/sota/aklite-callback.sh"
 )
 
 
