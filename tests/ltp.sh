@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-TESTS="${TESTS-syscalls -s madvise}"
+TESTS="${TESTS-mm}"
 LTP_PATH="${LTP_PATH-/opt/ltp}"
 LOGS="/tmp/LTP_$(date +%s)_"
 
