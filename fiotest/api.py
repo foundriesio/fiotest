@@ -65,7 +65,29 @@ class API:
             return r.text.strip()
         return "DRYRUN"
 
-    def complete_test(self, test_id: str, data: dict):
+    def _upload_item(self, artifacts_dir, artifact, urldata):
+        with open(os.path.join(artifacts_dir, artifact), "rb") as f:
+            try:
+                headers = {"Content-Type": urldata["content-type"]}
+                r = requests.put(
+                    urldata["url"],
+                    verify=self.ca,
+                    cert=self.cert,
+                    data=f,
+                    headers=headers,
+                )
+                if r.status_code not in (200, 201):
+                    status(
+                        "Unable to upload %s to %s - HTTP_%d\n%s"
+                        % (artifact, r.url, r.status_code, r.text)
+                    )
+            except Exception as e:
+                status("Unexpected error for %s: %s" % (artifact, str(e)))
+
+    def complete_test(self, test_id: str, data: dict, artifacts_dir: str):
+        artifacts = os.listdir(artifacts_dir)
+        if artifacts:
+            data["artifacts"] = artifacts
         if self.dryrun:
             print(json.dumps(data, indent=2))
         else:
@@ -74,6 +96,8 @@ class API:
                 sys.exit(
                     "Unable to complete test: HTTP_%d: %s" % (r.status_code, r.text)
                 )
+            for artifact, urldata in r.json().items():
+                self._upload_item(artifacts_dir, artifact, urldata)
 
     @staticmethod
     def target_name(sota_dir: str) -> str:
