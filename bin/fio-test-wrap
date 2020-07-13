@@ -74,7 +74,7 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
     test_id = api.start_test(test)
     status("Starting test: " + test_id + " -> " + " ".join(test_cmd))
 
-    fiotest_dir = "/var/lib/fiotest"
+    fiotest_dir = os.environ.get("FIO_TEST_DIR", "/var/lib/fiotest")
     if not os.path.isdir(fiotest_dir):
         status(
             "WARNING: %s does not exist. docker-compose.yml is likely missing bind mount"
