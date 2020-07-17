@@ -3,6 +3,7 @@ import os
 import requests
 import sys
 from time import sleep
+from typing import Optional
 
 
 def status(msg: str, prefix: str = "== "):
@@ -78,11 +79,7 @@ class API:
                         headers=headers,
                     )
                 else:
-                    r = requests.put(
-                        urldata["url"],
-                        data=f,
-                        headers=headers,
-                    )
+                    r = requests.put(urldata["url"], data=f, headers=headers,)
 
                 if r.status_code not in (200, 201):
                     status(
@@ -92,10 +89,13 @@ class API:
             except Exception as e:
                 status("Unexpected error for %s: %s" % (artifact, str(e)))
 
-    def complete_test(self, test_id: str, data: dict, artifacts_dir: str):
-        artifacts = os.listdir(artifacts_dir)
-        if artifacts:
-            data["artifacts"] = artifacts
+    def complete_test(
+        self, test_id: str, data: dict, artifacts_dir: Optional[str] = None
+    ):
+        if artifacts_dir:
+            artifacts = os.listdir(artifacts_dir)
+            if artifacts:
+                data["artifacts"] = artifacts
         if self.dryrun:
             print(json.dumps(data, indent=2))
         else:
