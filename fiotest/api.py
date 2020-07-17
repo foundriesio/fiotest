@@ -69,13 +69,21 @@ class API:
         with open(os.path.join(artifacts_dir, artifact), "rb") as f:
             try:
                 headers = {"Content-Type": urldata["content-type"]}
-                r = requests.put(
-                    urldata["url"],
-                    verify=self.ca,
-                    cert=self.cert,
-                    data=f,
-                    headers=headers,
-                )
+                if urldata["url"].startswith(self.url):
+                    r = requests.put(
+                        urldata["url"],
+                        verify=self.ca,
+                        cert=self.cert,
+                        data=f,
+                        headers=headers,
+                    )
+                else:
+                    r = requests.put(
+                        urldata["url"],
+                        data=f,
+                        headers=headers,
+                    )
+
                 if r.status_code not in (200, 201):
                     status(
                         "Unable to upload %s to %s - HTTP_%d\n%s"
