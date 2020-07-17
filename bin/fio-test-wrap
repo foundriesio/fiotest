@@ -11,7 +11,7 @@ from fiotest.api import API, status
 here = os.path.dirname(os.path.abspath(__file__))
 
 
-def run(test_dir: str, test_cmd: List[str]) -> str:
+def run(artifacts_dir: str, test_dir: str, test_cmd: List[str]) -> str:
     i = 0
     max_lines = 20
     last_lines: List[bytes] = [b""] * max_lines
@@ -19,6 +19,7 @@ def run(test_dir: str, test_cmd: List[str]) -> str:
     env["PATH"] = here + ":" + os.environ["PATH"]
     env["TEST_DIR"] = test_dir
     try:
+        consolefd = open(os.path.join(artifacts_dir, "console.log"), "wb")
         p = subprocess.Popen(
             test_cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env
         )
@@ -27,9 +28,11 @@ def run(test_dir: str, test_cmd: List[str]) -> str:
             sys.stdout.buffer.write(b"| ")
             sys.stdout.buffer.write(line)
             sys.stdout.buffer.flush()
+            consolefd.write(line)
             last_lines[i % max_lines] = line
             i += 1
         p.wait()
+        consolefd.close()
         if p.returncode != 0:
             raise subprocess.CalledProcessError(p.returncode, test_cmd)
     except Exception as e:
@@ -71,7 +74,7 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
     test_id = api.start_test(test)
     status("Starting test: " + test_id + " -> " + " ".join(test_cmd))
 
-    fiotest_dir = "/var/lib/fiotest"
+    fiotest_dir = os.environ.get("FIO_TEST_DIR", "/var/lib/fiotest")
     if not os.path.isdir(fiotest_dir):
         status(
             "WARNING: %s does not exist. docker-compose.yml is likely missing bind mount"
@@ -79,16 +82,24 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
         )
         os.mkdir(fiotest_dir)
 
-    results_dir = mkdtemp(prefix="fio-test", dir=fiotest_dir)
-    os.chmod(results_dir, 0o777)
+    tmpdir = mkdtemp(prefix="fio-test", dir=fiotest_dir)
+    os.chmod(tmpdir, 0o777)
+    artifacts_dir = os.path.join(tmpdir, "artifacts")
+    results_dir = os.path.join(tmpdir, "results")
+    for x in (artifacts_dir, results_dir):
+        os.mkdir(x)
+        os.chmod(x, 0o777)
+
     data = {}
-    failure = run(results_dir, test_cmd)
+    failure = run(artifacts_dir, results_dir, test_cmd)
     if failure:
         data = {"status": "FAILED", "details": failure}
 
     data["results"] = collect_results(results_dir)
-    rmtree(results_dir)
-    api.complete_test(test_id, data)
+    try:
+        api.complete_test(test_id, data, artifacts_dir)
+    finally:
+        rmtree(tmpdir)
 
 
 if __name__ == "__main__":
