@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   fiotest:
-    image: hub.foundries.io/lmp/fiotest:latest
+    image: hub.foundries.io/lmp/fiotest:postmerge
     restart: always
     privileged: true
     command: python3 -m fiotest.main /test-spec.yml
