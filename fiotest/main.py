@@ -16,9 +16,7 @@ from fiotest.spec import TestSpec
 logging.basicConfig(level="INFO", format="%(asctime)s %(levelname)s: %(message)s")
 log = logging.getLogger()
 
-CBFILE = os.environ.get(
-    "CALLBACK_SCRIPT", "/var/sota/aklite-callback.sh"
-)
+CBFILE = os.environ.get("CALLBACK_SCRIPT", "/var/sota/aklite-callback.sh")
 
 
 class Coordinator(AktualizrCallbackHandler):
@@ -71,12 +69,26 @@ def ensure_callbacks_configured():
                 os.fchmod(f.fileno(), 0o755)
 
     cbtoml = "/etc/sota/conf.d/z-90-fiotest.toml"
-    if not os.path.exists(cbtoml):
-        log.info("Configuring aktualizr-lite callback...")
-        with open(cbtoml, "w") as f:
-            f.write("[pacman]\n")
-            f.write('callback_program = "%s"\n' % CBFILE)
-        log.warning("TODO - aklite must be restarted before fiotest will be active")
+    cur = ""
+    new = (
+        """[pacman]
+callback_program = "%s"
+"""
+        % CBFILE
+    )
+    try:
+        with open(cbtoml) as f:
+            cur = f.read()
+            if cur != new:
+                log.info("Configuration of %s changing from %s -> %s", cbtoml, cur, new)
+    except FileNotFoundError:
+        log.info("Configuring aktualizr-lite callback with %s", cbtoml)
+        log.info(
+            "aktualizr-lite will be restarted in 10 minutes if callbacks aren't automatically detected"
+        )
+
+    with open(cbtoml, "w") as f:
+        f.write(new)
 
 
 def main(spec: TestSpec):
