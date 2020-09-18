@@ -49,13 +49,13 @@ class Coordinator(AktualizrCallbackHandler):
 
     def on_install_pre(self, current_target: str):
         if self.runner:
-            log.info("New target about to be installed, stopping testing")
+            log.info("New Target about to be installed, stopping testing")
             self.runner.stop()
             self.runner = None
 
     def on_install_post(self, current_target: str, status: str):
         if status == "OK":
-            log.info("New target installed - kicking off testing")
+            log.info("New Target installed - kicking off testing")
             self.runner = SpecRunner(self.spec)
             self.runner.start()
 
