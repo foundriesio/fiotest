@@ -60,7 +60,7 @@ class Coordinator(AktualizrCallbackHandler):
             self.runner.start()
 
 
-def ensure_callbacks_configured():
+def ensure_callbacks_configured(coordinator: Coordinator):
     for x in ("aklite-callback.sh", "trigger-target-tests.sh"):
         script = "/var/sota/" + x
         with open(os.path.basename(script)) as fin:
@@ -86,6 +86,9 @@ callback_program = "%s"
         log.info(
             "aktualizr-lite will be restarted in 10 minutes if callbacks aren't automatically detected"
         )
+        log.info("fiotest appears to be running for the first time. Kicking off testing on current Target")
+        coordinator.runner = SpecRunner(coordinator.spec)
+        coordinator.runner.start()
 
     with open(cbtoml, "w") as f:
         f.write(new)
@@ -93,8 +96,9 @@ callback_program = "%s"
 
 def main(spec: TestSpec):
     log.info("Test Spec is: %r", spec)
-    ensure_callbacks_configured()
-    cb_server = CallbackServer(Coordinator(spec))
+    coordinator = Coordinator(spec)
+    cb_server = CallbackServer(coordinator)
+    ensure_callbacks_configured(coordinator)
     cb_server.run_forever()
 
 
