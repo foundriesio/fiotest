@@ -2,8 +2,9 @@ import json
 import os
 import requests
 import sys
-from time import sleep
 from typing import Optional
+
+from fiotest.gateway_client import DeviceGatewayClient
 
 
 def status(msg: str, prefix: str = "== "):
@@ -14,26 +15,6 @@ def status(msg: str, prefix: str = "== "):
     sys.stdout.buffer.write(msg.encode())
     sys.stdout.buffer.write(b"\n")
     sys.stdout.buffer.flush()
-
-
-def _requests_op(op, *args, **kwargs):
-    """A retriable requests helper."""
-    for i in (1, 2, 4, 8, 16):
-        r = op(*args, **kwargs)
-        if r.status_code in (200, 201):
-            break
-        else:
-            status("ERROR with %s - HTTP_%d: %s" % (r.url, r.status_code, r.text))
-            sleep(i)
-    return r
-
-
-def post(*args, **kwargs):
-    return _requests_op(requests.post, *args, **kwargs)
-
-
-def put(*args, **kwargs):
-    return _requests_op(requests.put, *args, **kwargs)
 
 
 class API:
@@ -50,44 +31,35 @@ class API:
             os.path.join(sota_dir, "pkey.pem"),
         )
         self.headers = {"x-ats-target": cur_target}
+        self.gateway = DeviceGatewayClient(sota_dir)
 
     def start_test(self, name: str) -> str:
         data = {"name": name}
         if not self.dryrun:
-            r = post(
-                self.url,
-                json=data,
-                headers=self.headers,
-                verify=self.ca,
-                cert=self.cert,
-            )
+            r = self.gateway.post(self.url, data, self.headers)
             if r.status_code != 201:
                 sys.exit("Unable to start test: HTTP_%d: %s" % (r.status_code, r.text))
             return r.text.strip()
         return "DRYRUN"
 
     def _upload_item(self, artifacts_dir, artifact, urldata):
-        with open(os.path.join(artifacts_dir, artifact), "rb") as f:
-            try:
-                headers = {"Content-Type": urldata["content-type"]}
-                if urldata["url"].startswith(self.url):
-                    r = requests.put(
-                        urldata["url"],
-                        verify=self.ca,
-                        cert=self.cert,
-                        data=f,
-                        headers=headers,
-                    )
-                else:
+        path = os.path.join(artifacts_dir, artifact)
+        headers = {"Content-Type": urldata["content-type"]}
+
+        try:
+            if urldata["url"].startswith(self.url):
+                r = self.gateway.put_file(urldata["url"], path, headers=headers)
+            else:
+                with open(path, "rb") as f:
                     r = requests.put(urldata["url"], data=f, headers=headers,)
 
-                if r.status_code not in (200, 201):
-                    status(
-                        "Unable to upload %s to %s - HTTP_%d\n%s"
-                        % (artifact, r.url, r.status_code, r.text)
-                    )
-            except Exception as e:
-                status("Unexpected error for %s: %s" % (artifact, str(e)))
+            if r.status_code not in (200, 201):
+                status(
+                    "Unable to upload %s to %s - HTTP_%d\n%s"
+                    % (artifact, r.url, r.status_code, r.text)
+                )
+        except Exception as e:
+            status("Unexpected error for %s: %s" % (artifact, str(e)))
 
     def complete_test(
         self, test_id: str, data: dict, artifacts_dir: Optional[str] = None
@@ -99,12 +71,13 @@ class API:
         if self.dryrun:
             print(json.dumps(data, indent=2))
         else:
-            r = put(self.url + "/" + test_id, json=data, verify=self.ca, cert=self.cert)
+            r = self.gateway.put(self.url + "/" + test_id, data, self.headers)
             if r.status_code != 200:
                 sys.exit(
                     "Unable to complete test: HTTP_%d: %s" % (r.status_code, r.text)
                 )
-            for artifact, urldata in r.json().items():
+            for artifact, urldata in json.loads(r.text).items():
+                status("Uploading " + artifact)
                 self._upload_item(artifacts_dir, artifact, urldata)
 
     @staticmethod
