@@ -86,7 +86,9 @@ callback_program = "%s"
         log.info(
             "aktualizr-lite will be restarted in 10 minutes if callbacks aren't automatically detected"
         )
-        log.info("fiotest appears to be running for the first time. Kicking off testing on current Target")
+        log.info(
+            "fiotest appears to be running for the first time. Kicking off testing on current Target"
+        )
         coordinator.runner = SpecRunner(coordinator.spec)
         coordinator.runner.start()
 

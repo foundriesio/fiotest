@@ -86,7 +86,7 @@ class SpecRunner:
         execv(reboot.command[0], reboot.command)
 
     def _run_test(self, test: Test):
-        host_ip = netifaces.gateways()['default'][netifaces.AF_INET][0]
+        host_ip = netifaces.gateways()["default"][netifaces.AF_INET][0]
         args = ["/usr/local/bin/fio-test-wrap", test.name]
         if test.on_host:
             args.extend(
