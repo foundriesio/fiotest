@@ -1,5 +1,5 @@
 # Build LTP ------------------------------------------------------------------
-FROM ubuntu:20.04 as ltp
+FROM ubuntu:19.10 as ltp
 
 RUN apt update && \
 	apt install -y gcc git make pkgconf autoconf automake bison flex m4 libc6-dev wget
@@ -15,7 +15,7 @@ RUN cd /opt/ltp/testcases/bin && \
 	(strip `ls | grep -v .sh | grep -v .py` || true)
 
 # Build PyCurl----------------------------------------------------------------
-FROM ubuntu:20.04 as pycurl
+FROM ubuntu:19.10 as pycurl
 
 # python3-curl is built with gnutls so we build it by hand
 RUN apt update && \
@@ -23,7 +23,7 @@ RUN apt update && \
 RUN pip3 install pycurl==7.43.0.6
 
 # Build Container -------------------------------------------------------------
-FROM ubuntu:20.04
+FROM ubuntu:19.10
 
 # opensc install tzdata which requires user input without this:
 ENV TZ=UTC
@@ -38,9 +38,9 @@ RUN \
 	rm -rf /var/lib/apt/lists/*
 
 COPY --from=ltp /opt/ltp /opt/ltp
-COPY --from=pycurl /usr/local/lib/python3.8/dist-packages/pycurl* /usr/local/lib/python3.8/dist-packages/
+COPY --from=pycurl /usr/local/lib/python3.7/dist-packages/pycurl* /usr/local/lib/python3.7/dist-packages/
 COPY ./bin/* /usr/local/bin/
 COPY ./tests /usr/share/fio-tests
-COPY ./fiotest /usr/local/lib/python3.8/dist-packages/fiotest
+COPY ./fiotest /usr/local/lib/python3.7/dist-packages/fiotest
 COPY ./aklite-callback.sh /
 COPY ./trigger-target-tests.sh /
