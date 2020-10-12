@@ -39,6 +39,7 @@ RUN \
 
 COPY --from=ltp /opt/ltp /opt/ltp
 COPY --from=pydeps /usr/local/lib/python3.7/dist-packages/ /usr/local/lib/python3.7/dist-packages/
+COPY --from=pydeps /usr/lib/python3/dist-packages/six* /usr/local/lib/python3.7/dist-packages/
 COPY ./bin/* /usr/local/bin/
 COPY ./tests /usr/share/fio-tests
 COPY ./fiotest /usr/local/lib/python3.7/dist-packages/fiotest
