@@ -13,3 +13,5 @@ services:
       - ${SOTA_DIR-/var/sota}:/var/sota
       - ${TEST_SPEC-./test-spec.yml}:/test-spec.yml
       - ${FIOTEST_DIR-/var/lib/fiotest}:/var/lib/fiotest
+      # Uncomment for devices registered with softhsm
+      # - /var/lib/softhsm/:/var/lib/softhsm/
