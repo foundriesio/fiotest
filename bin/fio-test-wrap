@@ -18,6 +18,7 @@ def run(artifacts_dir: str, test_dir: str, test_cmd: List[str]) -> str:
     env = os.environ.copy()
     env["PATH"] = here + ":" + os.environ["PATH"]
     env["TEST_DIR"] = test_dir
+    env["ARTIFACTS_DIR"] = artifacts_dir
     try:
         consolefd = open(os.path.join(artifacts_dir, "console.log"), "wb")
         p = subprocess.Popen(
