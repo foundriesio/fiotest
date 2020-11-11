@@ -64,6 +64,14 @@ def collect_results(results_dir: str) -> List[dict]:
                     result["details"] = f.read()
             except FileNotFoundError:
                 pass
+
+        metrics = os.path.join(results_dir, res, "metrics")
+        if os.path.isdir(metrics):
+            result["metrics"] = {}
+            for m in os.listdir(metrics):
+                with open(os.path.join(metrics, m)) as f:
+                    val = float(f.read().strip())
+                    result["metrics"][m] = val
         skipped = os.path.exists(os.path.join(results_dir, res, "skipped"))
         if skipped:
             result["status"] = "SKIPPED"
