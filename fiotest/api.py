@@ -21,7 +21,6 @@ class API:
     def __init__(self, sota_dir: str, dryrun: bool):
         self.dryrun = dryrun
 
-        cur_target = self.target_name(sota_dir)
         self.url = self.test_url(sota_dir)
         status("Test URL: " + self.url)
 
@@ -30,8 +29,13 @@ class API:
             os.path.join(sota_dir, "client.pem"),
             os.path.join(sota_dir, "pkey.pem"),
         )
-        self.headers = {"x-ats-target": cur_target}
         self.gateway = DeviceGatewayClient(sota_dir)
+        self.sota_dir = sota_dir
+
+    @property
+    def headers(self):
+        cur_target = self.target_name(self.sota_dir)
+        return {"x-ats-target": cur_target}
 
     def start_test(self, name: str) -> str:
         data = {"name": name}

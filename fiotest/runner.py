@@ -24,6 +24,7 @@ class SpecRunner:
         self.spec = spec
         self.running = False
         self.thread = Thread(target=self.run)
+        self.api = API("/var/sota", False)
 
     def start(self):
         self.running = True
@@ -40,7 +41,7 @@ class SpecRunner:
                     completed,
                 )
             unlink(self.reboot_state)
-            API("/var/sota", False).complete_test(data["test_id"], {})
+            self.api.complete_test(data["test_id"], {})
         except FileNotFoundError:
             pass  # This is the "normal" case - no reboot has occurred
 
@@ -79,7 +80,7 @@ class SpecRunner:
 
     def _reboot(self, seq_idx: int, reboot: Reboot):
         log.warning("rebooting!!!!")
-        test_id = API("/var/sota", False).start_test("reboot")
+        test_id = self.api.start_test("reboot")
         with open(self.reboot_state, "w") as f:
             state = {"seq_idx": seq_idx + 1, "test_id": test_id}
             json.dump(state, f)
