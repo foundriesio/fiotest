@@ -1,9 +1,22 @@
 sequence:
   - tests:
-      - name: ltp
+      - name: block devices
         command:
-          - /usr/share/fio-tests/ltp.sh
-    # repeat not specified, so runs one time
+          - /usr/bin/lsblk
+        on_host: true
+      - name: cpus
+        command:
+          - /usr/bin/lscpu
+        on_host: true
+      - name: usb devices
+        command:
+          - /usr/bin/lsusb
+        on_host: true
+      - name: smoke tests
+        command:
+          - /usr/share/fio-tests/smoke.sh
+        on_host: true
+
   - reboot:
       command:
         - /bin/true
