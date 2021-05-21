@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import sys
@@ -105,8 +106,15 @@ def main(spec: TestSpec):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("Usage: %s <test-spec.yml>" % sys.argv[0])
-    with open(sys.argv[1]) as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('testspec', help="Test specification YAML file")
+    parser.add_argument('--loglevel', default="INFO", help="Log level")
+    args = parser.parse_args()
+    numeric_level = getattr(logging, args.loglevel.upper(), logging.INFO)
+    if not isinstance(numeric_level, int):
+        log.info("Unsupported log level {}".format(args.loglevel))
+    logging.basicConfig(level=numeric_level)
+
+    with open(args.testspec) as f:
         data = yaml.safe_load(f)
     main(TestSpec.parse_obj(data))
