@@ -1,19 +1,3 @@
-# Build LTP ------------------------------------------------------------------
-FROM ubuntu:20.04 as ltp
-
-RUN apt update && \
-	apt install -y gcc git make pkgconf autoconf automake bison flex m4 libc6-dev wget
-
-RUN wget -O /ltp.tar.xz https://github.com/linux-test-project/ltp/releases/download/20200515/ltp-full-20200515.tar.xz
-RUN tar -xf /ltp.tar.xz
-RUN	cd ltp-full* && \
-	./configure && \
-	make -j8 all && \
-	make install
-
-RUN cd /opt/ltp/testcases/bin && \
-	(strip `ls | grep -v .sh | grep -v .py` || true)
-
 # Build Python Deps------------------------------------------------------------
 FROM ubuntu:20.04 as pydeps
 
@@ -37,7 +21,6 @@ RUN \
 	ln -s /usr/lib/*-linux-gnu/engines-1.1 /usr/lib/engines-1.1 && \
 	rm -rf /var/lib/apt/lists/*
 
-COPY --from=ltp /opt/ltp /opt/ltp
 COPY --from=pydeps /usr/local/lib/python3.8/dist-packages/ /usr/local/lib/python3.8/dist-packages/
 COPY ./bin/* /usr/local/bin/
 COPY ./tests /usr/share/fio-tests
