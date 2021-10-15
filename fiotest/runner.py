@@ -1,6 +1,7 @@
 import json
 import logging
-from os import execv, unlink
+import requests
+import os
 import subprocess
 from threading import Thread
 from time import sleep
@@ -40,7 +41,7 @@ class SpecRunner:
                     "Detectected rebooted sequence, continuing after sequence %d",
                     completed,
                 )
-            unlink(self.reboot_state)
+            os.unlink(self.reboot_state)
             self.api.complete_test(data["test_id"], {})
         except FileNotFoundError:
             pass  # This is the "normal" case - no reboot has occurred
@@ -84,9 +85,34 @@ class SpecRunner:
         with open(self.reboot_state, "w") as f:
             state = {"seq_idx": seq_idx + 1, "test_id": test_id}
             json.dump(state, f)
-        execv(reboot.command[0], reboot.command)
+        os.execv(reboot.command[0], reboot.command)
+
+    def _prepare_context(self, context: dict):
+        return_dict = {}
+        if "url" in context.keys():
+            context_dict = {}
+            if os.path.exists("/var/sota/current-target"):
+                context_dict = API.file_variables("/var/sota/", "current-target")
+            if os.path.exists("/var/etc/os-release"):
+                context_dict.update(API.file_variables("/var/etc/", "os-release"))
+            target_url = context["url"]
+            try:
+                target_url = target_url.format(**context_dict)
+            except KeyError:
+                # ignore any missing keys
+                pass
+            log.info(f"Retrieving context from {target_url}")
+            env_response = requests.get(target_url)
+            if env_response.status_code == 200:
+                return_dict = env_response.json()
+        else:
+            return_dict = context
+        return return_dict
 
     def _run_test(self, test: Test):
+        environment = os.environ.copy()
+        if test.context:
+            environment.update(self._prepare_context(test.context))
         host_ip = netifaces.gateways()["default"][netifaces.AF_INET][0]
         args = ["/usr/local/bin/fio-test-wrap", test.name]
         if test.on_host:
@@ -100,9 +126,15 @@ class SpecRunner:
                     "fio@" + host_ip,
                 ]
             )
+            # pass environment to host
+            # this only works if PermitUserEnvironment is enabled
+            # on host
+            with open("~/.ssh/environment", "w") as sshfile:
+                for env_name, env_value in environment.items():
+                    sshfile.write(f"{env_name}={env_value}\n")
         args.extend(test.command)
         with open("/tmp/tmp.log", "wb") as f:
-            p = subprocess.Popen(args, stderr=f, stdout=f)
+            p = subprocess.Popen(args, stderr=f, stdout=f, env=environment)
             while p.poll() is None:
                 if not self.running:
                     log.info("Killing test")
