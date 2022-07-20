@@ -3,7 +3,7 @@ FROM ubuntu:20.04 as pydeps
 
 # python3-curl is built with gnutls so we build it by hand
 RUN apt update && \
-	apt install -y gcc libcurl4-openssl-dev libffi-dev libssh-dev python3-pip python3-dev
+	apt install -y gcc libcurl4-openssl-dev libffi-dev libssh-dev python3-pip python3-dev rustc cargo
 RUN pip3 install pycurl==7.43.0.6
 RUN pip3 install asyncssh==2.2.1 netifaces==0.10.9 requests==2.23.0 pyyaml==5.3.1 pydantic==1.5.1
 
