@@ -174,3 +174,9 @@ sequence:
           - /usr/share/fio-tests/ltp.sh
 ...
 ~~~
+
+## Custom Environment Variables
+
+- `FIO_TEST_DEBUG`: enable debug mode by setting the environment variable to "true".  Default to debug mode disabled. When debug mode is enabled, logs from /tmp/fio-test- are not deleted
+- `FIO_TEST_DOCKER_HOST`: set the Docker host IP used to run tests on the host directly.  Defaults to `172.17.0.1`.
+- `FIO_TEST_DRYRUN`: enable dry run mode by setting the environment variable to "true". Default to dry run disabled.  When dry run is disabled, test results are not reported to Foundries.  For backwards compatability, setting `DRYRUN` to any string should also enable dry run mode.

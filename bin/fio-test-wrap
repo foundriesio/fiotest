@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 from fiotest.api import API, status
+from fiotest.environment import debug_mode, dry_run
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -108,12 +109,12 @@ def main(sota_dir: str, test: str, test_cmd: List[str], dryrun: bool):
     try:
         api.complete_test(test_id, data, artifacts_dir)
     finally:
-        rmtree(tmpdir)
+        if not debug_mode():
+            rmtree(tmpdir)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         sys.exit("Usage: %s <test-name> <test command>..." % sys.argv[0])
     sota_dir = os.environ.get("SOTA_DIR", "/var/sota")
-    dryrun = os.environ.get("DRYRUN")
-    main(sota_dir, sys.argv[1], sys.argv[2:], dryrun)
+    main(sota_dir, sys.argv[1], sys.argv[2:], dry_run())
