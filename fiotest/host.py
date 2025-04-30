@@ -3,10 +3,12 @@ import asyncssh
 import sys
 from typing import Optional
 
+from environment import docker_host
+
 
 def _host_connect():
     return asyncssh.connect(
-        "172.17.0.1", known_hosts=None, username="fio", password="fio"
+        docker_host(), known_hosts=None, username="fio", password="fio"
     )
 
 
