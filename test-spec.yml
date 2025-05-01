@@ -1,6 +1,8 @@
 sequence:
   - tests:
       - name: block devices
+        context:
+            url: https://conductor.infra.foundries.io/api/context/{LMP_FACTORY}/{CUSTOM_VERSION}/{LMP_MACHINE}
         command:
           - /usr/bin/lsblk
         on_host: true
