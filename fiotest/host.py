@@ -3,7 +3,7 @@ import asyncssh
 import sys
 from typing import Optional
 
-from environment import docker_host
+from fiotest.environment import docker_host
 
 
 def _host_connect():
