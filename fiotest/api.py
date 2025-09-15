@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 import requests
 import sys
 from typing import Optional
 
 from fiotest.gateway_client import DeviceGatewayClient
+
+log = logging.getLogger()
 
 
 def status(msg: str, prefix: str = "== "):
@@ -86,19 +89,39 @@ class API:
 
     @staticmethod
     def target_name(sota_dir: str) -> str:
-        with open(os.path.join(sota_dir, "current-target")) as f:
-            for line in f:
-                if line.startswith("TARGET_NAME"):
-                    k, v = line.split("=")
-                    return v.replace('"', "").strip()  # remove spaces and quotes
+        try:
+            with open(os.path.join(sota_dir, "current-target")) as f:
+                for line in f:
+                    if line.startswith("TARGET_NAME"):
+                        k, v = line.split("=")
+                        return v.replace('"', "").strip()  # remove spaces and quotes
+        except FileNotFoundError:
+            pass  # ignore the error and exit
         sys.exit("Unable to find current target")
 
     @staticmethod
     def test_url(sota_dir: str) -> str:
-        with open(os.path.join(sota_dir, "sota.toml")) as f:
-            for line in f:
-                if line.startswith("server ="):
+        try:
+            with open(os.path.join(sota_dir, "sota.toml")) as f:
+                for line in f:
+                    if line.startswith("server ="):
+                        k, v = line.split("=")
+                        v = v.replace('"', "").strip()  # remove spaces and quotes
+                        return v + "/tests"
+        except FileNotFoundError:
+            pass  # ignore the error and exit
+        sys.exit("Unable to find server url")
+
+    @staticmethod
+    def file_variables(sota_dir: str, file_name: str) -> dict:
+        ret_dict = {}
+        try:
+            with open(os.path.join(sota_dir, file_name)) as f:
+                for line in f:
                     k, v = line.split("=")
                     v = v.replace('"', "").strip()  # remove spaces and quotes
-                    return v + "/tests"
-        sys.exit("Unable to find server url")
+                    ret_dict.update({k: v})
+        except FileNotFoundError:
+            log.warning(f"File {file_name} not found in {sota_dir}")
+            pass
+        return ret_dict

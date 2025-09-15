@@ -7,6 +7,7 @@ class Test(BaseModel):
     name: str
     command: List[str]
     on_host: bool = False
+    context: Optional[dict]
 
 
 class Reboot(BaseModel):
