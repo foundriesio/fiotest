@@ -7,7 +7,7 @@ RUN apt update && \
 RUN python3 -m pip install -U pip setuptools
 RUN CARGO_NET_GIT_FETCH_WITH_CLI=true pip3 -v install --no-cache-dir cryptography
 RUN pip3 install pycurl==7.45.7
-RUN pip3 install asyncssh==2.2.1 netifaces==0.10.9 requests==2.23.0 pyyaml==5.3.1 pydantic==1.5.1
+RUN pip3 install asyncssh==2.2.1 netifaces2==0.0.22 requests==2.23.0 pyyaml==5.3.1 pydantic==1.5.1
 
 # Build Container -------------------------------------------------------------
 FROM python:3.14.3-slim-trixie
